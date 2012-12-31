@@ -1,4 +1,4 @@
 supersonic-learn
 ================
 
-learn supersonic api.
+learn [supersonic](https://code.google.com/p/supersonic/) api.
