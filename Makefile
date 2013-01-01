@@ -5,7 +5,7 @@ PROBOBUF_LIB = /home/andi/opensources/protobuf/src/.libs/libprotobuf.a
 RE2_LIB = /home/andi/opensources/re2/obj/libre2.a
 
 CFLAGS = -I /home/andi/opensources/supersonic/\
-	 -I ../gtest_learn/gmock/gtest/include\
+	 -I /home/andi/mystudio/cpp/gtest_learn/gmock/gtest/include\
 	 -g
 
 all: main.cc

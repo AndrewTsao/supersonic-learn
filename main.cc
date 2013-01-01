@@ -1,5 +1,5 @@
-#include <assert.h>
-#include <stdio.h>
+#include <cassert>
+#include <cstdio>
 #include <cstring>
 #include <iostream>
 #include <string>
@@ -67,6 +67,63 @@ using supersonic::ProjectNamedAttributeAs;
 using supersonic::HashJoinOperation;
 using supersonic::INNER;
 using supersonic::UNIQUE;
+using supersonic::Equal;
+using supersonic::Now;
+using supersonic::DATETIME;
+using supersonic::ToString;
+using supersonic::Sequence;
+using supersonic::ExpressionList;
+using supersonic::Concat;
+
+static const char* const kDateFormatRfc3339 = "%Y/%m/%d-%H:%M:%S";
+
+static void LearnSeqExpr() {
+
+}
+
+
+static void LearnPrintHappyNewYear() {
+  scoped_ptr<CompoundExpression> printHappyNewYear(new CompoundExpression());
+  scoped_ptr<ExpressionList> printWaiting(new ExpressionList());
+  printWaiting->add(ConstString("waiting"));
+  printWaiting->add(DateFormatLocal(Now(), ConstString(kDateFormatRfc3339)));
+  printHappyNewYear->AddAs("print",
+      If(Less(Now(), ParseStringNulling(DATETIME, ConstString("2012/12/31-23:59:59"))),
+          Concat(printWaiting.release()),
+          DateFormatLocal(Now(), ConstString(kDateFormatRfc3339))));
+  scoped_ptr<Operation> compute(Compute(printHappyNewYear.release(), Generate(1)));
+  scoped_ptr<Cursor> cursor(SucceedOrDie(compute->CreateCursor()));
+  ResultView result = cursor->Next(1);
+  if (result.has_data()) {
+    cout << result.view().column(0).typed_data<STRING>()[0] << endl;
+  }
+}
+
+static void LearnCompoundExpression() {
+  scoped_ptr<CompoundExpression> tuple(new CompoundExpression());
+  tuple->AddAs("from", ConstString("Supersonic: "));
+  tuple->AddAs("say",
+      If(Less(ConstInt32(28), ConstInt32(29)),
+        ConstString("Hello"),
+        ConstString("World")));
+  tuple->AddAs("comma", ConstString(","));
+  tuple->AddAs("new", Plus(ConstInt32(2012), ConstInt32(1)));
+  scoped_ptr<Operation> compute(Compute(tuple.release(), Generate(10)));
+  scoped_ptr<Cursor> cursor(SucceedOrDie(compute->CreateCursor()));
+  scoped_ptr<ResultView> result(new ResultView(cursor->Next(-1)));
+  if (result->has_data()) {
+    const View& view = result->view();
+    cout << view.schema().GetHumanReadableSpecification() << endl;
+    for (int i = 0; i < view.row_count(); i++) {
+      cout << view.column(0).typed_data<STRING>()[i]
+           << view.column(1).typed_data<STRING>()[i]
+           << view.column(2).typed_data<STRING>()[i]
+           << view.column(3).typed_data<INT32>()[i]
+           << endl;
+    }
+  }
+}
+
 
 static Table *createAuthorTable() {
   TupleSchema author_schema;
@@ -586,5 +643,14 @@ int main(int argc, char** argv) {
 
   cout << "LearnHashJoin" << endl;
   LearnHashJoin();
+  cout << "LearnCompoundExpression" << endl;
+  LearnCompoundExpression();
+
+  cout << "LearnPrintHappyNewYear" << endl;
+  LearnPrintHappyNewYear();
+
+  cout << "LearnSeqExpr" << endl;
+  LearnSeqExpr();
+
   return 0;
 }
