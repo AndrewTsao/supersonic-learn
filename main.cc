@@ -16,6 +16,7 @@ using supersonic::TupleSchema;
 using supersonic::NULLABLE;
 using supersonic::BOOL;
 using supersonic::INT32;
+using supersonic::INT64;
 using supersonic::DOUBLE;
 using supersonic::STRING;
 using supersonic::DATE;
@@ -77,8 +78,19 @@ using supersonic::Concat;
 
 static const char* const kDateFormatRfc3339 = "%Y/%m/%d-%H:%M:%S";
 
+// generate a sequence of INT64 from 0 to count.
 static void LearnSeqExpr() {
-
+  scoped_ptr<const Expression> seq(Sequence());
+  scoped_ptr<CompoundExpression> seq_gen(new CompoundExpression());
+  seq_gen->AddAs("id", seq.release());
+  scoped_ptr<Operation> op (Compute(seq_gen.release(), Generate(10)));
+  scoped_ptr<Cursor> cursor(SucceedOrDie(op->CreateCursor()));
+  ResultView result = cursor->Next(-1);
+  if (result.has_data()) {
+    const View &view = result.view();
+    for (int i = 0; i < view.row_count(); i++)
+      cout << view.column(0).typed_data<INT64>()[i] << endl;
+  }
 }
 
 
@@ -248,7 +260,7 @@ static void LearnHashJoin() {
 }
 
 
-// Generate only row count, but no any column.
+// Generate only row count, but no any column and schema.
 static void LearnGenerate() {
   scoped_ptr<const Expression> rand(RandInt32());
   scoped_ptr<Operation> genRand(Compute(rand.release(), Generate(20)));
